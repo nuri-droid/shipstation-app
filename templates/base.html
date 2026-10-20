@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ShipStation Inventory{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar no-print">
+  <div class="brand">ShipStation Inventory{% if mock %} <span class="badge">MOCK DATA</span>{% endif %}</div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('picklist') }}" class="{{ 'active' if request.endpoint == 'picklist' }}">Pick List</a>
+    <a href="{{ url_for('comparison') }}" class="{{ 'active' if request.endpoint == 'comparison' }}">Rate Comparison</a>
+    <a href="{{ url_for('archive') }}" class="{{ 'active' if request.endpoint == 'archive' }}">Archive</a>
+    <a href="{{ url_for('check') }}" class="{{ 'active' if request.endpoint == 'check' }}">ShipStation Check</a>
+  </nav>
+  <div class="steps">
+    <form method="post" action="{{ url_for('refresh') }}" onsubmit="document.body.classList.add('loading')">
+      <button class="primary" title="1) export + 2) UPS rates + 3) FedEx comparison + archive">1&ndash;3 Refresh orders &amp; rates</button>
+    </form>
+    <form method="post" action="{{ url_for('send') }}"
+          onsubmit="if(!confirm('Write the assigned warehouse and aisle location (Custom Field 3) to ShipStation?')) return false; document.body.classList.add('loading')">
+      <button>4 Send to ShipStation</button>
+    </form>
+    <form method="post" action="{{ url_for('assign_users') }}"
+          onsubmit="if(!confirm('Assign every order to its warehouse user in ShipStation?')) return false; document.body.classList.add('loading')">
+      <button>5 Assign to users</button>
+    </form>
+  </div>
+  {% if session.user %}<span class="user">{{ session.user }} &middot; <a href="{{ url_for('logout') }}">Sign out</a></span>{% endif %}
+</header>
+<div class="loader no-print">Pulling orders, UPS and FedEx rates&hellip; this can take a minute.</div>
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="flash {{ cat }} no-print">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

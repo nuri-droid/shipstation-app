@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Rate Comparison{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <span class="muted">Last refresh: {{ created_at or '—' }}</span>
+  <span class="chip">Orders compared: {{ summary.compared }}</span>
+  <span class="chip">FedEx cheaper: {{ summary.fedex_cheaper }}</span>
+  <span class="chip">UPS cheaper / equal: {{ summary.ups_cheaper }}</span>
+  <span class="chip">Total saving if FedEx used: {{ summary.total_saving|money }}</span>
+</div>
+<div class="table-wrap">
+<table class="grid">
+  <thead><tr>
+    <th>Order ID</th><th>Order Number</th><th>Item SKU</th><th>State</th><th>Postal Code</th><th>Assigned WH</th>
+    <th>UPS IL</th><th>UPS CA</th><th>UPS TX</th><th>FedEx IL</th><th>FedEx CA</th><th>FedEx TX</th>
+    <th>Best UPS</th><th>Best FedEx</th><th>Cheapest Carrier</th><th>Cheapest WH</th><th>Cheapest Rate</th>
+    <th>FedEx Saves ($)</th><th>FedEx Saves (%)</th><th>Weight</th><th>L</th><th>W</th><th>H</th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.order_id }}</td><td>{{ r.order_number }}</td><td>{{ r.sku }}</td><td>{{ r.state }}</td><td>{{ r.postal }}</td><td>{{ r.assigned }}</td>
+      <td class="n">{{ r.ups.IL|money }}</td><td class="n">{{ r.ups.CA|money }}</td><td class="n">{{ r.ups.TX|money }}</td>
+      <td class="n">{{ r.fedex.IL|money }}</td><td class="n">{{ r.fedex.CA|money }}</td><td class="n">{{ r.fedex.TX|money }}</td>
+      <td class="n">{{ r.best_ups|money }}</td><td class="n">{{ r.best_fedex|money }}</td>
+      <td class="{{ 'fedex' if r.cheapest_carrier == 'FedEx' else 'ups' }}">{{ r.cheapest_carrier }}</td>
+      <td>{{ r.cheapest_wh }}</td><td class="n">{{ r.cheapest_rate|money }}</td>
+      <td class="n">{{ r.fedex_saves|money }}</td><td class="n">{{ '' if r.fedex_saves_pct is none else r.fedex_saves_pct ~ '%' }}</td>
+      <td class="n">{{ r.weight_oz|num }}</td><td class="n">{{ r.length|num }}</td><td class="n">{{ r.width|num }}</td><td class="n">{{ r.height|num }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

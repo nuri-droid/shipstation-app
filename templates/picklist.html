@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ warehouses[wh].name }} Pick List{% endblock %}
+{% block content %}
+<div class="picklist-layout">
+  <aside class="no-print">
+    <form method="get">
+      <label>Pick a warehouse
+        <select name="wh" onchange="this.form.submit()">
+          {% for k, label, name in wh_options %}<option value="{{ k }}" {{ 'selected' if wh == k }}>{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+    </form>
+    <form method="get" class="orders">
+      <input type="hidden" name="wh" value="{{ wh }}">
+      <input type="hidden" name="filtered" value="1">
+      <div class="muted">Orders assigned to {{ warehouses[wh].name }} ({{ candidates|length }} lines)</div>
+      <div class="order-list">
+      {% for r in candidates %}
+        {% set key = r.order_id ~ '|' ~ r.sku %}
+        <label class="{{ 'problem-text' if r.status }}">
+          <input type="checkbox" name="sel" value="{{ key }}" {{ 'checked' if selected is none or key in selected }}>
+          {{ r.order_number }} &middot; {{ r.qty }} &times; {{ r.sku }}{% if r.status %} &middot; {{ r.status }}{% endif %}
+        </label>
+      {% endfor %}
+      </div>
+      <button>Update list</button>
+    </form>
+    <button class="primary" onclick="window.print()">Print / Save as PDF</button>
+  </aside>
+
+  <section class="sheet">
+    <div class="sheet-head">
+      <div>Date Printed: {{ printed }}</div>
+      <div class="sign">
+        <div>Batch # ___________ &nbsp;&nbsp; Picked by ____________________ at _______________</div>
+        <div class="packed">Packed by ____________________ at _______________</div>
+      </div>
+    </div>
+    <h1>{{ warehouses[wh].name }} Pick List</h1>
+    <table class="grid pick">
+      <thead><tr><th>QTY</th><th>Part Number</th><th>Location</th><th>Qty in {{ warehouses[wh].name }} WH</th><th>Product Description</th></tr></thead>
+      <tbody>
+      {% for i in items %}
+        <tr><td class="n">{{ i.qty }}</td><td>{{ i.sku }}</td><td class="pre">{{ i.location }}</td><td class="n">{{ i.stock|num }}</td><td>{{ i.title }}</td></tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">No orders for this warehouse.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+{% endblock %}

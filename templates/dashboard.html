@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if created_at is none %}
+  <div class="empty">No data yet. Press <b>Refresh orders &amp; rates</b> to pull the awaiting shipments.</div>
+{% else %}
+<div class="toolbar">
+  <span class="muted">Last refresh: {{ created_at }} &middot; {{ total }} order lines</span>
+  <form method="get" class="filters">
+    <select name="wh" onchange="this.form.submit()">
+      <option value="">All warehouses</option>
+      {% for k, label, name in wh_options %}<option value="{{ k }}" {{ 'selected' if wh == k }}>{{ name }}</option>{% endfor %}
+      <option value="none" {{ 'selected' if wh == 'none' }}>Out of stock / unassigned</option>
+    </select>
+    <select name="status" onchange="this.form.submit()">
+      <option value="">All statuses</option>
+      <option value="ok" {{ 'selected' if status == 'ok' }}>No problem</option>
+      <option value="problem" {{ 'selected' if status == 'problem' }}>Has a warning</option>
+    </select>
+  </form>
+  <span class="counts">{% for name, n in counts.items() %}<span class="chip">{{ name }}: {{ n }}</span>{% endfor %}</span>
+  <a class="button" href="{{ url_for('dashboard_csv') }}">Download CSV</a>
+</div>
+{% for w in warnings %}<div class="flash warn">{{ w }}</div>{% endfor %}
+
+<div class="table-wrap">
+<table class="grid dashboard">
+  <thead>
+    <tr>
+      <th>Status</th><th>Manual Warehouse Assign</th><th>Automatic Warehouse Assign</th>
+      <th>Order ID</th><th>Order Number</th><th>Qty</th><th>Item SKU</th><th>Weight (oz)</th>
+      <th>L</th><th>W</th><th>H</th><th>City</th><th>State</th><th>Postal Code</th><th>Warehouse ID</th>
+      <th>Resid.</th><th>Amount (net)</th><th>Custom Field 3</th>
+      <th>IL Qty</th><th>TX Qty</th><th>WH Match</th>
+      <th>Chicago SS UPS</th><th>Texas SS UPS</th><th>Chicago SS FedEx</th><th>Texas SS FedEx</th>
+      <th>$ Order Profit $</th><th>% Order Profit %</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    {% set wc = {'IL':'wh-il','TX':'wh-tx','CA':'wh-ca'}.get(r.assigned_key, '') %}
+    <tr class="{{ wc }} {{ 'problem' if r.status in ['Not Enough Inventory', 'Over 50 lbs.'] }}">
+      <td class="{{ 'mismatch' if r.status == 'WH does not match' }}">{{ r.status }}</td>
+      <td>
+        <form method="post" action="{{ url_for('assign') }}">
+          <input type="hidden" name="order_id" value="{{ r.order_id }}">
+          <input type="hidden" name="sku" value="{{ r.sku }}">
+          <select name="warehouse" onchange="this.form.submit()">
+            <option value=""></option>
+            {% for k, label, name in wh_options %}<option value="{{ label }}" {{ 'selected' if r.manual == label }}>{{ name }}</option>{% endfor %}
+          </select>
+        </form>
+      </td>
+      <td>{{ r.assigned }}</td>
+      <td>{{ r.order_id }}</td><td>{{ r.order_number }}</td><td class="n">{{ r.qty }}</td><td>{{ r.sku }}</td>
+      <td class="n">{{ r.weight_oz|num }}</td><td class="n">{{ r.length|num }}</td><td class="n">{{ r.width|num }}</td><td class="n">{{ r.height|num }}</td>
+      <td>{{ r.city }}</td><td>{{ r.state }}</td><td>{{ r.postal }}</td><td>{{ r.warehouse_id }}</td>
+      <td>{{ 'Y' if r.residential else 'N' }}</td><td class="n">{{ r.amount_net|money }}</td>
+      <td class="pre">{{ r.aisle }}</td>
+      <td class="n">{{ r.stock.IL|num }}</td><td class="n">{{ r.stock.TX|num }}</td>
+      <td>{{ 'WH matches' if r.wh_match else 'WH does not match' }}</td>
+      {% for c, w in [('ups','IL'), ('ups','TX'), ('fedex','IL'), ('fedex','TX')] %}
+        {% set v = r[c][w] %}
+        <td class="n rate {{ 'cheapest' if (c ~ '_' ~ w) in r.cheapest_cells }}">{{ v|money if v is not none else ('NO SERVICE' if c == 'ups' else '') }}</td>
+      {% endfor %}
+      <td class="n {{ 'muted' if r.landed_missing }}" title="{{ 'Landed cost missing for a SKU in this order' if r.landed_missing }}">{{ r.profit|money }}</td>
+      {% set p = r.profit_pct %}
+      <td class="n {% if p is not none %}{% if p < 0.09 %}p-0{% elif p <= 0.19 %}p-1{% elif p <= 0.29 %}p-2{% elif p <= 0.4 %}p-3{% endif %}{% endif %}">{{ p|pct }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

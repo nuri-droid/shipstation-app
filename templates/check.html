@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}ShipStation Check{% endblock %}
+{% block content %}
+<div class="cards">
+  <div class="card {{ 'alert' if check.multiple }}">
+    <div class="card-title">Multiple ({{ check.multiple|length }} Orders)</div>
+    <div class="card-body mono">{{ check.multiple|join(';') or 'None' }}</div>
+  </div>
+  <div class="card {{ 'alert' if check.zero }}">
+    <div class="card-title">Zero Dimensions ({{ check.zero|length }} Orders)</div>
+    <div class="card-body mono">{{ check.zero|join(';') or 'None' }}</div>
+  </div>
+</div>
+<div class="table-wrap">
+<table class="grid">
+  <thead><tr><th>Order Number</th><th>Weight</th><th>Length</th><th>Width</th><th>Height</th><th>Item Quantity</th><th>Rows with this number</th></tr></thead>
+  <tbody>
+  {% for r in check.rows %}
+    <tr class="{{ 'problem-soft' if r.count > 1 or not r.length or not r.width or not r.height }}">
+      <td>{{ r.order_number }}</td><td class="n">{{ r.weight_oz|num }}</td>
+      <td class="n">{{ r.length|num }}</td><td class="n">{{ r.width|num }}</td><td class="n">{{ r.height|num }}</td>
+      <td class="n">{{ r.qty }}</td><td class="n">{{ r.count }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

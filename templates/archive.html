@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Comparison Archive{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <span class="muted">{{ total }} archived rows (one per Order ID + SKU, added on every refresh)</span>
+  <form method="get" class="filters"><input name="q" value="{{ q }}" placeholder="Search order ID, number or SKU"><button>Search</button></form>
+  <a class="button" href="{{ url_for('archive_csv') }}">Download CSV</a>
+</div>
+<div class="table-wrap">
+<table class="grid">
+  <thead><tr><th>archived_at</th>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td>{{ r.archived_at }}</td>{% for c in columns %}<td>{{ r[c] }}</td>{% endfor %}</tr>
+  {% else %}
+    <tr><td colspan="{{ columns|length + 1 }}" class="muted">Nothing archived yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+Flask>=3.0
+requests>=2.31
+gspread>=6.0
+python-dotenv>=1.0
+gunicorn>=22.0
+psycopg[binary]>=3.1
+pytest>=8.0
